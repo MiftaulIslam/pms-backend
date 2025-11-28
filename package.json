@@ -30,6 +30,7 @@
     "@prisma/adapter-mariadb": "^7.0.0",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
+    "@vercel/node": "^3.0.0",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "multer": "^2.0.2",
