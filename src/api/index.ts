@@ -4,10 +4,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import 'dotenv/config';
 import * as cookieParser from 'cookie-parser';
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { INestApplication } from '@nestjs/common';
 
-let app: any;
+let app: INestApplication | null = null;
 
-async function bootstrap() {
+async function bootstrap(): Promise<INestApplication> {
     if (!app) {
         app = await NestFactory.create(AppModule);
         app.use(cookieParser());
