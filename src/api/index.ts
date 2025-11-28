@@ -11,8 +11,8 @@ let app: INestApplication | null = null;
 async function bootstrap(): Promise<INestApplication> {
     if (!app) {
         app = await NestFactory.create(AppModule);
-        app.use(cookieParser());
-        app.enableCors({
+        (app as any).use(cookieParser());
+        (app as any).enableCors({
             origin: true,
             credentials: true,
         });
