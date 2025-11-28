@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import { GoogleStrategy } from './strategy/google.strategy';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { JwtRefreshStrategy } from './strategy/jwt-refresh.strategy';
+import { JwtAuthGuard } from './auth.guard';
 import { User } from '../entities/user.entity';
 import { Account } from '../entities/account.entity';
 
@@ -25,8 +26,8 @@ import { Account } from '../entities/account.entity';
     TypeOrmModule.forFeature([User, Account]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService],
+  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtRefreshStrategy, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}
 

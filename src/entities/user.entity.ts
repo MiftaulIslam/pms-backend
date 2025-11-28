@@ -41,6 +41,9 @@ export class User {
   @Column({ type: 'json', nullable: true })
   interestIn: string[] | null = null;
 
+  @Column('varchar', { length: 191, nullable: true })
+  lastWorkspaceId: string | null = null;
+
   @OneToMany(() => Account, (a) => a.user)
   accounts!: Account[];
 

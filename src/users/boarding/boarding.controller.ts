@@ -1,8 +1,9 @@
-import { Body, Controller, Post, Req, UploadedFile, UseInterceptors, Logger } from '@nestjs/common';
+import { Body, Controller, Post, Req, UploadedFile, UseInterceptors, UseGuards, Logger } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardingService } from './boarding.service';
 import { CreateBoardingDto } from './dto/create-boarding.dto';
+import { JwtAuthGuard } from '../../auth/auth.guard';
 
 @ApiTags('users/boarding')
 @Controller('users/boarding')
@@ -11,6 +12,8 @@ export class BoardingController {
   constructor(private readonly boardingService: BoardingService) {}
 
   @ApiOperation({ summary: 'Complete onboarding' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

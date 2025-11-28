@@ -1,50 +1,179 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PMS Backend API Documentation
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Project Management System (PMS) backend API with comprehensive workspace management, user authentication, and collaboration features.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Overview
 
-## Description
+This NestJS-based backend provides a complete API for project management with the following core features:
+- **Authentication**: Google OAuth integration with JWT token management
+- **User Management**: Profile management, onboarding, and avatar handling
+- **Workspace Management**: Create, manage, and collaborate in workspaces
+- **File Management**: Avatar and workspace logo uploads with static file serving
+- **Role-Based Access**: Owner/member permissions and workspace security
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Base URL
 
-## Project setup
+```
+http://localhost:9000
+```
+
+## Authentication
+
+All protected endpoints require a valid JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <jwt-token>
+```
+
+### Token Types
+- **Access Token**: 7 days expiry, used for API requests
+- **Refresh Token**: 30 days expiry, used to refresh access tokens
+
+## API Endpoints Summary
+
+### Authentication (`/auth`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/auth/google` | Initiate Google OAuth | No |
+| `GET` | `/auth/google/callback` | Handle OAuth callback | No |
+| `POST` | `/auth/refresh` | Refresh access token | No (refresh token in body) |
+
+### Users (`/users`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/users/me` | Get current user profile | Yes |
+| `GET` | `/users/:id` | Get user by ID | Yes |
+| `PATCH` | `/users/profile` | Update user profile | Yes |
+
+### Onboarding (`/users/boarding`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/users/boarding/complete` | Complete user onboarding | Yes |
+
+### Workspaces (`/workspaces`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/workspaces` | Create workspace | Yes |
+| `GET` | `/workspaces` | Get all workspaces (admin) | Yes |
+| `GET` | `/workspaces/my` | Get my workspaces | Yes |
+| `GET` | `/workspaces/last` | Get last active workspace | Yes |
+| `GET` | `/workspaces/:id` | Get workspace details | Yes |
+| `GET` | `/workspaces/:id/members` | Get workspace members | Yes |
+| `PATCH` | `/workspaces/:id` | Update workspace | Yes |
+| `DELETE` | `/workspaces/:id` | Delete workspace | Yes |
+| `POST` | `/workspaces/:id/leave` | Leave workspace | Yes |
+| `POST` | `/workspaces/:id/logo` | Update workspace logo | Yes |
+| `DELETE` | `/workspaces/:id/logo` | Remove workspace logo | Yes |
+
+## Key Features
+
+### 🚀 Google OAuth Integration
+- Seamless Google authentication
+- Automatic user account creation
+- JWT token management with refresh support
+
+### 👤 User Management
+- Complete user profiles with avatars
+- Onboarding process with workspace creation
+- Profile updates and management
+
+### 🏢 Workspace Management
+- Create and manage workspaces
+- Role-based access control (Owner/Member)
+- Last workspace tracking for seamless UX
+- Workspace logo support
+
+### 📁 File Management
+- Avatar uploads for users
+- Workspace logo uploads
+- Automatic file naming and organization
+- Static file serving via `/uploads/` route
+
+### 🔐 Security Features
+- JWT-based authentication
+- Role-based authorization
+- Automatic token refresh
+- Secure file handling
+
+## File Upload Specifications
+
+### User Avatars
+- **Endpoint**: During onboarding (`/users/boarding/complete`)
+- **Storage**: `/uploads/avatars/{userId}.{ext}`
+- **Naming**: `{userId}.{original-extension}`
+- **Access**: `/uploads/avatars/{userId}.{ext}`
+
+### Workspace Logos
+- **Endpoint**: `POST /workspaces/:id/logo`
+- **Storage**: `/uploads/workspace-logos/{name}-{timestamp}.{ext}`
+- **Naming**: `{workspace-name}-{timestamp}.{extension}`
+- **Access**: `/uploads/workspace-logos/{name}-{timestamp}.{ext}`
+
+## Database Schema
+
+### Core Entities
+- **User**: User profiles and authentication
+- **Account**: Linked OAuth accounts
+- **Workspace**: Workspaces with ownership
+- **WorkspaceMember**: Workspace membership with roles
+- **WorkspaceInvitation**: Pending workspace invitations
+
+### Key Relationships
+- Users can own multiple workspaces
+- Users can be members of multiple workspaces
+- Workspaces have one owner and multiple members
+- Each membership has a role (OWNER, MEMBER)
+
+## Error Handling
+
+### Standard Error Responses
+```json
+{
+  "message": "Error description",
+  "error": "Error type",
+  "statusCode": 400
+}
+```
+
+### Common HTTP Status Codes
+- **200**: Success
+- **201**: Created
+- **204**: No Content (successful delete)
+- **400**: Bad Request
+- **401**: Unauthorized
+- **403**: Forbidden
+- **404**: Not Found
+- **500**: Internal Server Error
+
+## Development
+
+### Environment Variables
+```env
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USER=PMS
+DATABASE_PASSWORD=ariyan
+DATABASE_NAME=pms
+JWT_SECRET=your-jwt-secret
+```
+
+### Project setup
 
 ```bash
 $ yarn install
 ```
 
-## Compile and run the project
+### Running the Application
 
 ```bash
 # development
-$ yarn run start
-
-# watch mode
 $ yarn run start:dev
 
 # production mode
 $ yarn run start:prod
 ```
 
-## Run tests
+### Run tests
 
 ```bash
 # unit tests
@@ -57,42 +186,80 @@ $ yarn run test:e2e
 $ yarn run test:cov
 ```
 
-## Deployment
+### Database Setup
+The application uses TypeORM with MySQL. Database tables are automatically created/synchronized on startup.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## API Usage Examples
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Complete Authentication Flow
+```javascript
+// 1. Initiate Google OAuth
+window.location.href = 'http://localhost:9000/auth/google';
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+// 2. Handle OAuth callback (redirected by Google)
+// Tokens are returned in the response
+
+// 3. Store tokens
+localStorage.setItem('accessToken', response.accessToken);
+localStorage.setItem('refreshToken', response.refreshToken);
+
+// 4. Make authenticated requests
+const response = await fetch('http://localhost:9000/users/me', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+  }
+});
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Create Workspace with Logo
+```javascript
+const createWorkspace = async (name, logoFile) => {
+  const formData = new FormData();
+  formData.append('name', name);
+  if (logoFile) formData.append('logo', logoFile);
 
-## Resources
+  const response = await fetch('http://localhost:9000/workspaces', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    }
+  });
 
-Check out a few resources that may come in handy when working with NestJS:
+  return await response.json();
+};
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Get User's Workspaces with Last Workspace
+```javascript
+const getMyWorkspaces = async () => {
+  const response = await fetch('http://localhost:9000/workspaces/my', {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    }
+  });
 
-## Support
+  const { workspaces, lastWorkspaceId } = await response.json();
+  
+  // Redirect to last workspace if available
+  if (lastWorkspaceId) {
+    window.location.href = `/workspace/${lastWorkspaceId}`;
+  }
+  
+  return workspaces;
+};
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Technology Stack
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **Framework**: NestJS
+- **Database**: MySQL with TypeORM
+- **Authentication**: JWT + Google OAuth
+- **File Handling**: Multer
+- **Documentation**: Swagger/OpenAPI
+- **Validation**: Built-in NestJS validation
+- **Testing**: Jest
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is licensed under the MIT License.

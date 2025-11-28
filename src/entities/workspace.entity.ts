@@ -20,6 +20,9 @@ export class Workspace {
   @Column('varchar', { length: 255 })
   name!: string;
 
+  @Column('varchar', { length: 500, nullable: true })
+  logo: string | null = null;
+
   @CreateDateColumn({ type: 'datetime' })
   createdAt!: Date;
 
