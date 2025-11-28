@@ -26,11 +26,11 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'mysql',
-        host: process.env.DATABASE_HOST || 'localhost',
+        host: process.env.DATABASE_HOST,
         port: Number(process.env.DATABASE_PORT || 3306),
-        username: process.env.DATABASE_USER || 'PMS',
-        password: process.env.DATABASE_PASSWORD || 'ariyan',
-        database: process.env.DATABASE_NAME || 'pms',
+        username: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_NAME,
         entities: [Account, User,  Workspace, WorkspaceMember, WorkspaceInvitation],
         synchronize: true,
         logging: true,
