@@ -6,7 +6,13 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
-
+  // Enable CORS
+  app.enableCors({
+    origin: `${process.env.FRONTEND_URL}`,   // your React app
+    credentials: true,                 // allow cookies if needed
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   const config = new DocumentBuilder()
     .setTitle('PMS API')
     .setDescription('API documentation for PMS backend')

@@ -24,7 +24,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth callback' })
   @ApiOkResponse({ description: 'OAuth login result with nextStep' })
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: any) {
+  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
+    console.log('OAuth callback received');
     const profile = req.user as {
       provider: 'google';
       providerId: string;
@@ -33,7 +34,22 @@ export class AuthController {
       avatar?: string | null;
       accessToken?: string | null;
     };
-    return this.authService.oauthLogin(profile);
+    console.log('Profile:', profile);
+    
+    const result = await this.authService.oauthLogin(profile);
+    console.log('OAuth result:', result);
+    
+    // Redirect to frontend with tokens as URL parameters
+    const frontendUrl = 'http://localhost:5173';
+    const redirectUrl = `${frontendUrl}/auth/success?` +
+      `accessToken=${encodeURIComponent(result.accessToken)}&` +
+      `refreshToken=${encodeURIComponent(result.refreshToken)}&` +
+      `accessExpires=${encodeURIComponent(result.accessExpires.toString())}&` +
+      `refreshExpires=${encodeURIComponent(result.refreshExpires.toString())}&` +
+      `nextStep=${encodeURIComponent(result.nextStep)}`;
+    
+    console.log('Redirecting to:', redirectUrl);
+    return res.redirect(redirectUrl);
   }
 
   @Post('refresh')
