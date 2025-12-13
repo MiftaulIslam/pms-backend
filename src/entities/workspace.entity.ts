@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { WorkspaceMember } from './workspace-member.entity';
 import { WorkspaceInvitation } from './workspace-invitation.entity';
+import { Collection } from './collection.entity';
 
 @Entity('workspaces')
 export class Workspace {
@@ -38,6 +39,9 @@ export class Workspace {
 
   @OneToMany(() => WorkspaceInvitation, (i) => i.workspace)
   invitations!: WorkspaceInvitation[];
+
+  @OneToMany(() => Collection, (c) => c.workspace)
+  collections!: Collection[];
 
   constructor() {
     if (!this.id) this.id = randomUUID();

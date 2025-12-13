@@ -11,8 +11,17 @@ import { Account } from './entities/account.entity';
 import { Workspace } from './entities/workspace.entity';
 import { WorkspaceMember } from './entities/workspace-member.entity';
 import { WorkspaceInvitation } from './entities/workspace-invitation.entity';
+import { Collection } from './entities/collection.entity';
+import { Folder } from './entities/folder.entity';
+import { Item } from './entities/item.entity';
+import { KanbanBoard } from './entities/kanban-board.entity';
+import { KanbanColumn } from './entities/kanban-column.entity';
+import { KanbanTask } from './entities/kanban-task.entity';
+import { Document } from './entities/document.entity';
+import { Whiteboard } from './entities/whiteboard.entity';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { PlaygroundModule } from './playground/playground.module';
 
 @Module({
   imports: [
@@ -31,15 +40,44 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
         username: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
-        entities: [Account, User,  Workspace, WorkspaceMember, WorkspaceInvitation],
+        entities: [
+          Account,
+          User,
+          Workspace,
+          WorkspaceMember,
+          WorkspaceInvitation,
+          Collection,
+          Folder,
+          Item,
+          KanbanBoard,
+          KanbanColumn,
+          KanbanTask,
+          Document,
+          Whiteboard,
+        ],
         synchronize: true,
         logging: true,
       }),
     }),
-    TypeOrmModule.forFeature([Account, User,  Workspace, WorkspaceMember, WorkspaceInvitation]),
+    TypeOrmModule.forFeature([
+      Account,
+      User,
+      Workspace,
+      WorkspaceMember,
+      WorkspaceInvitation,
+      Collection,
+      Folder,
+      Item,
+      KanbanBoard,
+      KanbanColumn,
+      KanbanTask,
+      Document,
+      Whiteboard,
+    ]),
     AuthModule,
     UsersModule,
     WorkspacesModule,
+    PlaygroundModule,
   ],
   controllers: [AppController],
   providers: [AppService],

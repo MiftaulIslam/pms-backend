@@ -65,6 +65,44 @@ Authorization: Bearer <jwt-token>
 | `POST` | `/workspaces/:id/logo` | Update workspace logo | Yes |
 | `DELETE` | `/workspaces/:id/logo` | Remove workspace logo | Yes |
 
+### Playground (`/playground`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/playground/collections` | Create collection | Yes |
+| `GET` | `/playground/collections` | Get all collections for workspace | Yes |
+| `GET` | `/playground/collections/:id` | Get collection with hierarchy | Yes |
+| `PATCH` | `/playground/collections/:id` | Update collection | Yes |
+| `DELETE` | `/playground/collections/:id` | Delete collection | Yes |
+| `POST` | `/playground/collections/:id/icon` | Upload collection icon | Yes |
+| `PATCH` | `/playground/collections/:id/reorder` | Reorder collection | Yes |
+| `POST` | `/playground/folders` | Create folder | Yes |
+| `GET` | `/playground/folders/:id` | Get folder with children | Yes |
+| `PATCH` | `/playground/folders/:id` | Update folder | Yes |
+| `DELETE` | `/playground/folders/:id` | Delete folder | Yes |
+| `POST` | `/playground/folders/:id/icon` | Upload folder icon | Yes |
+| `PATCH` | `/playground/folders/:id/move` | Move folder | Yes |
+| `PATCH` | `/playground/folders/:id/reorder` | Reorder folder | Yes |
+| `POST` | `/playground/items` | Create item (list/doc/whiteboard) | Yes |
+| `GET` | `/playground/items/:id` | Get item details | Yes |
+| `PATCH` | `/playground/items/:id` | Update item | Yes |
+| `DELETE` | `/playground/items/:id` | Delete item | Yes |
+| `POST` | `/playground/items/:id/icon` | Upload item icon | Yes |
+| `PATCH` | `/playground/items/:id/move` | Move item | Yes |
+| `PATCH` | `/playground/items/:id/reorder` | Reorder item | Yes |
+
+### Kanban (`/playground/kanban`)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/playground/kanban/boards` | Create kanban board | Yes |
+| `GET` | `/playground/kanban/boards/:itemId` | Get kanban board | Yes |
+| `POST` | `/playground/kanban/columns` | Create column | Yes |
+| `PATCH` | `/playground/kanban/columns/:id` | Update column | Yes |
+| `DELETE` | `/playground/kanban/columns/:id` | Delete column | Yes |
+| `POST` | `/playground/kanban/tasks` | Create task | Yes |
+| `PATCH` | `/playground/kanban/tasks/:id` | Update task | Yes |
+| `DELETE` | `/playground/kanban/tasks/:id` | Delete task | Yes |
+| `PATCH` | `/playground/kanban/tasks/:id/move` | Move task | Yes |
+
 ## Key Features
 
 ### 🚀 Google OAuth Integration
@@ -83,9 +121,19 @@ Authorization: Bearer <jwt-token>
 - Last workspace tracking for seamless UX
 - Workspace logo support
 
+### 🎮 Playground System
+- Hierarchical organization: Collections → Folders → Items
+- Collections belong to workspaces
+- Folders can be nested within collections or other folders
+- Items can be lists (kanban boards), documents, or whiteboards
+- Icon support (emoji or image upload)
+- Position-based ordering with drag-and-drop support
+- Move and reorder operations for all entities
+
 ### 📁 File Management
 - Avatar uploads for users
 - Workspace logo uploads
+- Collection/folder/item icon uploads
 - Automatic file naming and organization
 - Static file serving via `/uploads/` route
 
@@ -109,6 +157,16 @@ Authorization: Bearer <jwt-token>
 - **Naming**: `{workspace-name}-{timestamp}.{extension}`
 - **Access**: `/uploads/workspace-logos/{name}-{timestamp}.{ext}`
 
+### Collection/Folder/Item Icons
+- **Endpoints**: 
+  - `POST /playground/collections/:id/icon`
+  - `POST /playground/folders/:id/icon`
+  - `POST /playground/items/:id/icon`
+- **Storage**: `/uploads/icons/{type}-{id}-{timestamp}.{ext}`
+- **Naming**: `{type}-{entity-id}-{timestamp}.{extension}`
+- **Access**: `/uploads/icons/{type}-{id}-{timestamp}.{ext}`
+- **Supported Types**: `collection`, `folder`, `item`
+
 ## Database Schema
 
 ### Core Entities
@@ -117,12 +175,28 @@ Authorization: Bearer <jwt-token>
 - **Workspace**: Workspaces with ownership
 - **WorkspaceMember**: Workspace membership with roles
 - **WorkspaceInvitation**: Pending workspace invitations
+- **Collection**: Top-level containers in workspaces
+- **Folder**: Nested folders within collections or other folders
+- **Item**: Items (list/doc/whiteboard) within collections or folders
+- **KanbanBoard**: Kanban boards for list items
+- **KanbanColumn**: Columns within kanban boards
+- **KanbanTask**: Tasks with subtask support
+- **Document**: Document content
+- **Whiteboard**: Whiteboard content
 
 ### Key Relationships
 - Users can own multiple workspaces
 - Users can be members of multiple workspaces
 - Workspaces have one owner and multiple members
 - Each membership has a role (OWNER, MEMBER)
+- Workspaces contain multiple collections
+- Collections contain folders and items
+- Folders can be nested and contain items
+- Items can be lists (kanban), documents, or whiteboards
+- List items automatically create kanban boards
+- Kanban boards contain columns
+- Columns contain tasks
+- Tasks can have subtasks (self-referencing)
 
 ## Error Handling
 
