@@ -14,6 +14,7 @@ import { CreateColumnDto } from './dto/create-column.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { MoveTaskDto } from './dto/move-task.dto';
+import { ReorderDto } from '../dto/reorder.dto';
 
 @Injectable()
 export class KanbanService {
@@ -235,6 +236,48 @@ export class KanbanService {
         await this.verifyItemAccess(column.kanbanBoard.itemId, userId);
 
         await this.kanbanColumnsRepository.update(id, updateData);
+        return await this.kanbanColumnsRepository.findOne({
+            where: { id },
+            relations: ['tasks'],
+        });
+    }
+
+    async reorderColumn(id: string, reorderDto: ReorderDto, userId: string) {
+        const column = await this.kanbanColumnsRepository.findOne({
+            where: { id },
+            relations: ['kanbanBoard', 'kanbanBoard.item'],
+        });
+
+        if (!column) {
+            throw new NotFoundException('Column not found');
+        }
+
+        await this.verifyItemAccess(column.kanbanBoard.itemId, userId);
+
+        const columns = await this.kanbanColumnsRepository.find({
+            where: { kanbanBoardId: column.kanbanBoardId },
+            order: { position: 'ASC' },
+        });
+
+        const currentIndex = columns.findIndex((c) => c.id === id);
+        if (currentIndex === -1) {
+            throw new NotFoundException('Column not found');
+        }
+
+        const newIndex = reorderDto.position;
+        if (newIndex < 0 || newIndex >= columns.length) {
+            throw new BadRequestException('Invalid position');
+        }
+
+        columns.splice(currentIndex, 1);
+        columns.splice(newIndex, 0, column);
+
+        await Promise.all(
+            columns.map((c, index) =>
+                this.kanbanColumnsRepository.update(c.id, { position: index }),
+            ),
+        );
+
         return await this.kanbanColumnsRepository.findOne({
             where: { id },
             relations: ['tasks'],

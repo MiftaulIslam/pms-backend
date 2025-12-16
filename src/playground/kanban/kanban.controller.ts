@@ -17,6 +17,7 @@ import { CreateColumnDto } from './dto/create-column.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { MoveTaskDto } from './dto/move-task.dto';
+import { ReorderDto } from '../dto/reorder.dto';
 import { JwtAuthGuard } from '../../auth/auth.guard';
 
 @ApiTags('kanban')
@@ -167,6 +168,47 @@ export class KanbanController {
   ) {
     const userId = req.user?.id;
     return this.kanbanService.updateColumn(id, updateData, userId);
+  }
+
+  /**
+   * Reorder a kanban column
+   * Changes the position of a column within the kanban board.
+   */
+  @Patch('columns/:id/reorder')
+  @ApiOperation({ 
+    summary: 'Reorder kanban column',
+    description: 'Changes the position of a column within the kanban board. Position is 0-based.'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        position: { type: 'number', example: 2, description: 'New position (0-based index)' },
+      },
+      required: ['position'],
+    },
+    examples: {
+      example1: {
+        summary: 'Move to position 0',
+        value: {
+          position: 0,
+        },
+      },
+      example2: {
+        summary: 'Move to position 2',
+        value: {
+          position: 2,
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Column reordered successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid position' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
+  @ApiResponse({ status: 404, description: 'Column not found' })
+  reorderColumn(@Param('id') id: string, @Body() reorderDto: ReorderDto, @Req() req: any) {
+    const userId = req.user?.id;
+    return this.kanbanService.reorderColumn(id, reorderDto, userId);
   }
 
   /**
