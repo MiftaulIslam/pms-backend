@@ -30,6 +30,9 @@ export class Folder {
   @Column('varchar', { length: 255 })
   name!: string;
 
+  @Column('text', { nullable: true })
+  description: string | null = null;
+
   @Column({ type: 'enum', enum: IconType, nullable: true })
   iconType: IconType | null = null;
 

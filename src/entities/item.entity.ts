@@ -35,6 +35,9 @@ export class Item {
   @Column('varchar', { length: 255 })
   name!: string;
 
+  @Column('text', { nullable: true })
+  description: string | null = null;
+
   @Column({ type: 'enum', enum: ItemType })
   type!: ItemType;
 

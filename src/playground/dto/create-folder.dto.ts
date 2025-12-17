@@ -17,6 +17,11 @@ export class CreateFolderDto {
   @IsString()
   name!: string;
 
+  @ApiProperty({ description: 'Folder description', required: false })
+  @IsString()
+  @IsOptional()
+  description?: string | null;
+
   @ApiProperty({ description: 'Icon type', enum: IconType, required: false })
   @IsEnum(IconType)
   @IsOptional()

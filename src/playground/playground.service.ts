@@ -687,15 +687,21 @@ export class PlaygroundService {
             });
             const savedBoard = await this.kanbanBoardsRepository.save(kanbanBoard);
 
-            // Create default columns: To Do, In Progress, Done
-            const defaultColumns = [
-                { title: 'To Do', position: 0, color: '#3b82f6' },
-                { title: 'In Progress', position: 1, color: '#f59e0b' },
-                { title: 'Done', position: 2, color: '#10b981' },
-            ];
+            // Use provided columns or create default columns
+            const columnsToCreate = createItemDto.columns && createItemDto.columns.length > 0
+                ? createItemDto.columns.map((col) => ({
+                    title: col.title,
+                    position: col.position,
+                    color: col.color || null,
+                }))
+                : [
+                    { title: 'To Do', position: 0, color: '#3b82f6' },
+                    { title: 'In Progress', position: 1, color: '#f59e0b' },
+                    { title: 'Done', position: 2, color: '#10b981' },
+                ];
 
             const createdColumns = await Promise.all(
-                defaultColumns.map((col) => {
+                columnsToCreate.map((col) => {
                     const column = this.kanbanColumnsRepository.create({
                         kanbanBoardId: savedBoard.id,
                         title: col.title,
@@ -706,18 +712,20 @@ export class PlaygroundService {
                 }),
             );
 
-            // Create a default task "hello world" in the "To Do" column
-            const todoColumn = createdColumns.find((col) => col.title === 'To Do');
-            if (todoColumn) {
-                const defaultTask = this.kanbanTasksRepository.create({
-                    kanbanColumnId: todoColumn.id,
-                    title: 'hello world',
-                    position: 0,
-                    done: false,
-                    isParent: false,
-                    tags: null,
-                });
-                await this.kanbanTasksRepository.save(defaultTask);
+            // Only create default task if using default columns
+            if (!createItemDto.columns || createItemDto.columns.length === 0) {
+                const todoColumn = createdColumns.find((col) => col.title === 'To Do');
+                if (todoColumn) {
+                    const defaultTask = this.kanbanTasksRepository.create({
+                        kanbanColumnId: todoColumn.id,
+                        title: 'hello world',
+                        position: 0,
+                        done: false,
+                        isParent: false,
+                        tags: null,
+                    });
+                    await this.kanbanTasksRepository.save(defaultTask);
+                }
             }
         }
 

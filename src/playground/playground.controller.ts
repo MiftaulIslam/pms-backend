@@ -274,6 +274,7 @@ export class PlaygroundController {
                 collectionId: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440000', nullable: true },
                 parentFolderId: { type: 'string', example: '660e8400-e29b-41d4-a716-446655440001', nullable: true },
                 name: { type: 'string', example: 'zenflow-frontend' },
+                description: { type: 'string', example: 'Frontend project folder', nullable: true },
                 iconType: { type: 'string', enum: ['emoji', 'image'], example: 'emoji', nullable: true },
                 icon: { type: 'string', example: '📂', nullable: true },
             },
@@ -501,7 +502,7 @@ export class PlaygroundController {
     @Post('items')
     @ApiOperation({ 
         summary: 'Create a new item (list/doc/whiteboard)',
-        description: 'Creates a new item. collectionId is required. parentFolderId is optional. If type is "list", a kanban board is automatically created with default columns and a sample task.'
+        description: 'Creates a new item. collectionId is required. parentFolderId is optional. If type is "list", a kanban board is automatically created. If columns are provided in the request, those columns will be created; otherwise, default columns (To Do, In Progress, Done) will be created. If using default columns, a sample task "hello world" is also created in the To Do column.'
     })
     @ApiBody({
         schema: {
@@ -510,21 +511,52 @@ export class PlaygroundController {
                 collectionId: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440000' },
                 parentFolderId: { type: 'string', example: '660e8400-e29b-41d4-a716-446655440001', nullable: true },
                 name: { type: 'string', example: 'My List' },
+                description: { type: 'string', example: 'Project management list', nullable: true },
                 type: { type: 'string', enum: ['list', 'doc', 'whiteboard'], example: 'list' },
                 iconType: { type: 'string', enum: ['emoji', 'image'], example: 'emoji', nullable: true },
                 icon: { type: 'string', example: '📋', nullable: true },
+                columns: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            title: { type: 'string', example: 'To Do' },
+                            position: { type: 'number', example: 0 },
+                            color: { type: 'string', example: '#3b82f6', nullable: true },
+                        },
+                        required: ['title', 'position'],
+                    },
+                    nullable: true,
+                    description: 'Columns for list type items. If provided, these columns will be created instead of default columns (To Do, In Progress, Done).',
+                },
             },
             required: ['collectionId', 'name', 'type'],
         },
         examples: {
             example1: {
-                summary: 'Create list item',
+                summary: 'Create list item with default columns',
                 value: {
                     collectionId: '550e8400-e29b-41d4-a716-446655440000',
                     name: 'My Kanban Board',
+                    description: 'Project management board',
                     type: 'list',
                     iconType: 'emoji',
                     icon: '📋',
+                },
+            },
+            example1b: {
+                summary: 'Create list item with custom columns',
+                value: {
+                    collectionId: '550e8400-e29b-41d4-a716-446655440000',
+                    name: 'My Kanban Board',
+                    description: 'Custom workflow board',
+                    type: 'list',
+                    columns: [
+                        { title: 'Backlog', position: 0, color: '#6366f1' },
+                        { title: 'In Progress', position: 1, color: '#f59e0b' },
+                        { title: 'Review', position: 2, color: '#8b5cf6' },
+                        { title: 'Done', position: 3, color: '#10b981' },
+                    ],
                 },
             },
             example2: {

@@ -40,7 +40,7 @@ export class AuthController {
     console.log('OAuth result:', result);
     
     // Redirect to frontend with tokens as URL parameters
-    const frontendUrl = 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_CALLBACK;
     const redirectUrl = `${frontendUrl}/auth/success?` +
       `accessToken=${encodeURIComponent(result.accessToken)}&` +
       `refreshToken=${encodeURIComponent(result.refreshToken)}&` +

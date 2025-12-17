@@ -145,6 +145,7 @@ fetch('/playground/collections', {
 {
   "collectionId": "collection-uuid",
   "name": "zenflow-frontend",
+  "description": "Frontend project folder",
   "iconType": "emoji",
   "icon": "📂"
 }
@@ -155,9 +156,18 @@ OR for nested folders:
 ```json
 {
   "parentFolderId": "folder-uuid",
-  "name": "components"
+  "name": "components",
+  "description": "Component library folder"
 }
 ```
+
+**Fields**:
+- `collectionId` (optional) - Collection ID if folder is at root level
+- `parentFolderId` (optional) - Parent folder ID if folder is nested (must specify either collectionId or parentFolderId)
+- `name` (required) - Folder name
+- `description` (optional) - Folder description
+- `iconType` (optional) - Icon type: `emoji` or `image`
+- `icon` (optional) - Icon value (emoji string or path after image upload)
 
 **Response**: Folder object with relations
 
@@ -218,24 +228,70 @@ OR for nested folders:
 #### Create Item
 
 - **Endpoint**: `POST /playground/items`
-- **Description**: Create an item (list/doc/whiteboard). If type is "list", a kanban board is automatically created.
+- **Description**: Create an item (list/doc/whiteboard). If type is "list", a kanban board is automatically created. You can provide custom columns in the request; if not provided, default columns (To Do, In Progress, Done) will be created.
 - **Authentication**: Required (JWT)
 - **Request Body**:
 
+**With default columns (for list type):**
 ```json
 {
   "collectionId": "collection-uuid",
   "name": "My Kanban Board",
+  "description": "Project management board",
   "type": "list",
   "iconType": "emoji",
   "icon": "📋"
 }
 ```
 
+**With custom columns (for list type):**
+```json
+{
+  "collectionId": "collection-uuid",
+  "name": "My Kanban Board",
+  "description": "Custom workflow board",
+  "type": "list",
+  "columns": [
+    {
+      "title": "Backlog",
+      "position": 0,
+      "color": "#6366f1"
+    },
+    {
+      "title": "In Progress",
+      "position": 1,
+      "color": "#f59e0b"
+    },
+    {
+      "title": "Review",
+      "position": 2,
+      "color": "#8b5cf6"
+    },
+    {
+      "title": "Done",
+      "position": 3,
+      "color": "#10b981"
+    }
+  ]
+}
+```
+
 **Item Types**:
 - `list` - Kanban board (automatically creates kanban_board record)
+  - If `columns` are provided, those columns will be created
+  - If `columns` are not provided, default columns (To Do, In Progress, Done) are created with a sample task in To Do column
 - `doc` - Document
 - `whiteboard` - Whiteboard
+
+**Fields**:
+- `collectionId` (required) - Collection ID that the item belongs to
+- `parentFolderId` (optional) - Folder ID if item is in a folder
+- `name` (required) - Item name
+- `description` (optional) - Item description
+- `type` (required) - Item type: `list`, `doc`, or `whiteboard`
+- `iconType` (optional) - Icon type: `emoji` or `image`
+- `icon` (optional) - Icon value (emoji string or path after image upload)
+- `columns` (optional, list type only) - Array of column objects with `title`, `position`, and optional `color`
 
 **Response**: Item object with associated content
 
