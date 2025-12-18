@@ -51,6 +51,7 @@ export class PlaygroundController {
             properties: {
                 workspaceId: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440000' },
                 name: { type: 'string', example: 'ZenFlow' },
+                description: { type: 'string', example: 'My project collection', nullable: true },
                 iconType: { type: 'string', enum: ['emoji', 'image'], example: 'emoji', nullable: true },
                 icon: { type: 'string', example: '🚀', nullable: true },
             },

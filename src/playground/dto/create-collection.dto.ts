@@ -13,6 +13,11 @@ export class CreateCollectionDto {
   @IsNotEmpty()
   name!: string;
 
+  @ApiProperty({ description: 'Collection description', example: 'My project collection', required: false })
+  @IsString()
+  @IsOptional()
+  description?: string | null;
+
   @ApiProperty({ description: 'Icon type', enum: IconType, required: false })
   @IsEnum(IconType)
   @IsOptional()
