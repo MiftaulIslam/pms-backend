@@ -10,12 +10,9 @@ import {
     Req,
     HttpCode,
     HttpStatus,
-    UseInterceptors,
-    UploadedFile,
     Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PlaygroundService } from './playground.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
@@ -183,38 +180,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteCollection(id, userId);
     }
 
-    /**
-     * Upload collection icon image
-     * Uploads an image file to be used as the collection icon.
-     * The iconType will be automatically set to 'image'.
-     */
-    @Post('collections/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload collection icon',
-        description: 'Uploads an image file to be used as the collection icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Collection icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Collection icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Collection not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadCollectionIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadCollectionIcon(id, userId, file);
-    }
 
     /**
      * Reorder collections within a workspace
@@ -383,37 +348,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteFolder(id, userId);
     }
 
-    /**
-     * Upload folder icon image
-     * Uploads an image file to be used as the folder icon.
-     */
-    @Post('folders/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload folder icon',
-        description: 'Uploads an image file to be used as the folder icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Folder icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Folder icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Folder not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadFolderIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadFolderIcon(id, userId, file);
-    }
 
     /**
      * Move a folder to a different parent
@@ -659,37 +593,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteItem(id, userId);
     }
 
-    /**
-     * Upload item icon image
-     * Uploads an image file to be used as the item icon.
-     */
-    @Post('items/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload item icon',
-        description: 'Uploads an image file to be used as the item icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Item icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Item icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Item not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadItemIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadItemIcon(id, userId, file);
-    }
 
     /**
      * Move an item to a different parent

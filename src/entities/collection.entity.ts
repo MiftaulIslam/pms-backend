@@ -29,12 +29,27 @@ export class Collection {
 
   @Column('text', { nullable: true })
   description: string | null = null;
+  @Column({
+    type: 'enum',
+    enum: IconType,
+    default: IconType.SOLID,
+  })
+  iconType!: IconType;
 
-  @Column({ type: 'enum', enum: IconType, nullable: true })
-  iconType: IconType | null = null;
 
-  @Column('varchar', { length: 500, nullable: true })
-  icon: string | null = null;
+  @Column('varchar', {
+    length: 500,
+    nullable: true,
+    default: 'InboxStack',
+  })
+  icon!: string | null;
+  
+  @Column('varchar', {
+    length: 500,
+    nullable: true,
+    default: '#60A5FA',
+  })
+  iconColor!: string | null;
 
   @Column('int', { default: 0 })
   position!: number;

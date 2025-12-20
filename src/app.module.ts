@@ -19,9 +19,11 @@ import { KanbanColumn } from './entities/kanban-column.entity';
 import { KanbanTask } from './entities/kanban-task.entity';
 import { Document } from './entities/document.entity';
 import { Whiteboard } from './entities/whiteboard.entity';
+import { Image } from './entities/image.entity';
 import { UsersModule } from './users/users.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { PlaygroundModule } from './playground/playground.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -54,6 +56,7 @@ import { PlaygroundModule } from './playground/playground.module';
           KanbanTask,
           Document,
           Whiteboard,
+          Image,
         ],
         synchronize: true,
         logging: true,
@@ -73,13 +76,15 @@ import { PlaygroundModule } from './playground/playground.module';
       KanbanTask,
       Document,
       Whiteboard,
+      Image,
     ]),
     AuthModule,
     UsersModule,
     WorkspacesModule,
     PlaygroundModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

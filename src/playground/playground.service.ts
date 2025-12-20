@@ -19,8 +19,6 @@ import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { ReorderDto } from './dto/reorder.dto';
 import { MoveDto } from './dto/move.dto';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class PlaygroundService {
@@ -200,44 +198,6 @@ export class PlaygroundService {
         return { message: 'Collection deleted successfully' };
     }
 
-    async uploadCollectionIcon(id: string, userId: string, file: Express.Multer.File) {
-        const collection = await this.collectionsRepository.findOne({
-            where: { id },
-        });
-
-        if (!collection) {
-            throw new NotFoundException('Collection not found');
-        }
-
-        await this.verifyWorkspaceAccess(collection.workspaceId, userId);
-
-        const iconsDir = path.join(process.cwd(), 'uploads', 'icons');
-        fs.mkdirSync(iconsDir, { recursive: true });
-
-        const timestamp = Date.now();
-        const sanitizedName = collection.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        const ext = path.extname(file.originalname) || '.png';
-        const filename = `collection-${collection.id}-${timestamp}${ext}`;
-        const filePath = path.join(iconsDir, filename);
-
-        if (collection.icon && collection.iconType === 'image' && collection.icon.startsWith('/uploads/icons/')) {
-            const oldIconPath = path.join(process.cwd(), collection.icon);
-            if (fs.existsSync(oldIconPath)) {
-                fs.unlinkSync(oldIconPath);
-            }
-        }
-
-        fs.writeFileSync(filePath, file.buffer);
-        const iconPath = `/uploads/icons/${filename}`;
-
-    await this.collectionsRepository.update(id, {
-      iconType: IconType.IMAGE,
-      icon: iconPath,
-    });
-
-        this.logger.log(`Collection icon updated: ${iconPath}`);
-        return await this.findOneCollection(id, userId);
-    }
 
     async reorderCollection(id: string, reorderDto: ReorderDto, userId: string) {
         const collection = await this.collectionsRepository.findOne({
@@ -346,6 +306,7 @@ export class PlaygroundService {
             ...createFolderDto,
             collectionId: collectionId,
             position: maxPosition,
+            iconType: createFolderDto.iconType ?? undefined,
         });
 
         return await this.foldersRepository.save(folder);
@@ -406,7 +367,11 @@ export class PlaygroundService {
 
         await this.verifyWorkspaceAccess(workspaceId, userId);
 
-        await this.foldersRepository.update(id, updateFolderDto);
+        const updateData: any = { ...updateFolderDto };
+        if (updateData.iconType === null) {
+            delete updateData.iconType;
+        }
+        await this.foldersRepository.update(id, updateData);
         return await this.findOneFolder(id, userId);
     }
 
@@ -431,49 +396,6 @@ export class PlaygroundService {
         return { message: 'Folder deleted successfully' };
     }
 
-    async uploadFolderIcon(id: string, userId: string, file: Express.Multer.File) {
-        const folder = await this.foldersRepository.findOne({
-            where: { id },
-            relations: ['collection'],
-        });
-
-        if (!folder) {
-            throw new NotFoundException('Folder not found');
-        }
-
-        const workspaceId = folder.collectionId
-            ? (await this.collectionsRepository.findOne({ where: { id: folder.collectionId } }))!
-                .workspaceId
-            : await this.getWorkspaceIdFromFolder(folder.id);
-
-        await this.verifyWorkspaceAccess(workspaceId, userId);
-
-        const iconsDir = path.join(process.cwd(), 'uploads', 'icons');
-        fs.mkdirSync(iconsDir, { recursive: true });
-
-        const timestamp = Date.now();
-        const ext = path.extname(file.originalname) || '.png';
-        const filename = `folder-${folder.id}-${timestamp}${ext}`;
-        const filePath = path.join(iconsDir, filename);
-
-        if (folder.icon && folder.iconType === 'image' && folder.icon.startsWith('/uploads/icons/')) {
-            const oldIconPath = path.join(process.cwd(), folder.icon);
-            if (fs.existsSync(oldIconPath)) {
-                fs.unlinkSync(oldIconPath);
-            }
-        }
-
-        fs.writeFileSync(filePath, file.buffer);
-        const iconPath = `/uploads/icons/${filename}`;
-
-    await this.foldersRepository.update(id, {
-      iconType: IconType.IMAGE,
-      icon: iconPath,
-    });
-
-        this.logger.log(`Folder icon updated: ${iconPath}`);
-        return await this.findOneFolder(id, userId);
-    }
 
     async moveFolder(id: string, moveDto: MoveDto, userId: string) {
         const folder = await this.foldersRepository.findOne({
@@ -676,6 +598,7 @@ export class PlaygroundService {
         const item = this.itemsRepository.create({
             ...createItemDto,
             position: maxPosition,
+            iconType: createItemDto.iconType ?? undefined,
         });
 
         const savedItem = await this.itemsRepository.save(item);
@@ -769,7 +692,11 @@ export class PlaygroundService {
 
         await this.verifyWorkspaceAccess(workspaceId, userId);
 
-        await this.itemsRepository.update(id, updateItemDto);
+        const updateData: any = { ...updateItemDto };
+        if (updateData.iconType === null) {
+            delete updateData.iconType;
+        }
+        await this.itemsRepository.update(id, updateData);
         return await this.findOneItem(id, userId);
     }
 
@@ -794,49 +721,6 @@ export class PlaygroundService {
         return { message: 'Item deleted successfully' };
     }
 
-    async uploadItemIcon(id: string, userId: string, file: Express.Multer.File) {
-        const item = await this.itemsRepository.findOne({
-            where: { id },
-            relations: ['collection'],
-        });
-
-        if (!item) {
-            throw new NotFoundException('Item not found');
-        }
-
-        const workspaceId = item.collectionId
-            ? (await this.collectionsRepository.findOne({ where: { id: item.collectionId } }))!
-                .workspaceId
-            : await this.getWorkspaceIdFromFolder(item.parentFolderId!);
-
-        await this.verifyWorkspaceAccess(workspaceId, userId);
-
-        const iconsDir = path.join(process.cwd(), 'uploads', 'icons');
-        fs.mkdirSync(iconsDir, { recursive: true });
-
-        const timestamp = Date.now();
-        const ext = path.extname(file.originalname) || '.png';
-        const filename = `item-${item.id}-${timestamp}${ext}`;
-        const filePath = path.join(iconsDir, filename);
-
-        if (item.icon && item.iconType === 'image' && item.icon.startsWith('/uploads/icons/')) {
-            const oldIconPath = path.join(process.cwd(), item.icon);
-            if (fs.existsSync(oldIconPath)) {
-                fs.unlinkSync(oldIconPath);
-            }
-        }
-
-        fs.writeFileSync(filePath, file.buffer);
-        const iconPath = `/uploads/icons/${filename}`;
-
-    await this.itemsRepository.update(id, {
-      iconType: IconType.IMAGE,
-      icon: iconPath,
-    });
-
-        this.logger.log(`Item icon updated: ${iconPath}`);
-        return await this.findOneItem(id, userId);
-    }
 
     async moveItem(id: string, moveDto: MoveDto, userId: string) {
         const item = await this.itemsRepository.findOne({
