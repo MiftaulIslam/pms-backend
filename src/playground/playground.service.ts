@@ -237,6 +237,113 @@ export class PlaygroundService {
         return await this.findOneCollection(id, userId);
     }
 
+    async duplicateCollection(id: string, userId: string) {
+        const collection = await this.collectionsRepository.findOne({
+            where: { id },
+            relations: ['workspace'],
+        });
+
+        if (!collection) {
+            throw new NotFoundException('Collection not found');
+        }
+
+        await this.verifyWorkspaceAccess(collection.workspaceId, userId);
+
+        const maxPosition = await this.getMaxPosition(this.collectionsRepository, {
+            workspaceId: collection.workspaceId,
+        });
+
+        const duplicatedCollection = this.collectionsRepository.create({
+            workspaceId: collection.workspaceId,
+            name: `${collection.name}-copy`,
+            description: collection.description,
+            iconType: collection.iconType,
+            icon: collection.icon,
+            iconColor: collection.iconColor,
+            position: maxPosition,
+        });
+
+        const savedCollection = await this.collectionsRepository.save(duplicatedCollection);
+
+        // Get all folders and items from the original collection
+        const [originalFolders, originalItems] = await Promise.all([
+            this.foldersRepository.find({
+                where: { collectionId: id, parentFolderId: IsNull() },
+                order: { position: 'ASC' },
+            }),
+            this.itemsRepository.find({
+                where: { collectionId: id, parentFolderId: IsNull() },
+                order: { position: 'ASC' },
+            }),
+        ]);
+
+        // Duplicate root folders recursively
+        for (const folder of originalFolders) {
+            await this.duplicateFolderRecursive(folder.id, savedCollection.id, null, userId);
+        }
+
+        // Duplicate root items
+        for (const item of originalItems) {
+            await this.duplicateItem(item.id, userId, savedCollection.id, null);
+        }
+
+        return await this.findOneCollection(savedCollection.id, userId);
+    }
+
+    private async duplicateFolderRecursive(
+        folderId: string,
+        collectionId: string,
+        parentFolderId: string | null,
+        userId: string
+    ): Promise<void> {
+        const folder = await this.foldersRepository.findOne({
+            where: { id: folderId },
+        });
+
+        if (!folder) return;
+
+        const where = parentFolderId
+            ? { collectionId, parentFolderId }
+            : { collectionId, parentFolderId: IsNull() };
+
+        const maxPosition = await this.getMaxPosition(this.foldersRepository, where);
+
+        const duplicatedFolder = this.foldersRepository.create({
+            collectionId,
+            parentFolderId,
+            name: `${folder.name}-copy`,
+            description: folder.description,
+            iconType: folder.iconType,
+            icon: folder.icon,
+            iconColor: folder.iconColor,
+            position: maxPosition,
+        });
+
+        const savedFolder = await this.foldersRepository.save(duplicatedFolder);
+
+        // Get nested folders and items
+        const [nestedFolders, nestedItems] = await Promise.all([
+            this.foldersRepository.find({
+                where: { parentFolderId: folderId },
+                order: { position: 'ASC' },
+            }),
+            this.itemsRepository.find({
+                where: { parentFolderId: folderId },
+                order: { position: 'ASC' },
+            }),
+        ]);
+
+        // Recursively duplicate nested folders
+        for (const nestedFolder of nestedFolders) {
+            await this.duplicateFolderRecursive(nestedFolder.id, collectionId, savedFolder.id, userId);
+        }
+
+        // Duplicate nested items
+        for (const item of nestedItems) {
+            await this.duplicateItem(item.id, userId, collectionId, savedFolder.id);
+        }
+    }
+
     // Folders
     async createFolder(createFolderDto: CreateFolderDto, userId: string) {
         if (!createFolderDto.collectionId && !createFolderDto.parentFolderId) {
@@ -348,6 +455,94 @@ export class PlaygroundService {
         await this.verifyWorkspaceAccess(workspaceId, userId);
 
         return folder;
+    }
+
+    async duplicateFolder(id: string, userId: string) {
+        const folder = await this.foldersRepository.findOne({
+            where: { id },
+            relations: ['collection'],
+        });
+
+        if (!folder) {
+            throw new NotFoundException('Folder not found');
+        }
+
+        let workspaceId: string;
+        let collectionId: string | null = null;
+        let where: any;
+
+        if (folder.collectionId) {
+            const collection = await this.collectionsRepository.findOne({
+                where: { id: folder.collectionId },
+            });
+            if (!collection) {
+                throw new NotFoundException('Collection not found');
+            }
+            
+            workspaceId = collection.workspaceId;
+            collectionId = folder.collectionId;
+            where = { collectionId: folder.collectionId, parentFolderId: folder.parentFolderId };
+        } else {
+            workspaceId = await this.getWorkspaceIdFromFolder(folder.id);
+            // Get collectionId from parent folder
+            let currentFolderId: string | null = folder.parentFolderId;
+            while (currentFolderId) {
+                const parentFolder = await this.foldersRepository.findOne({
+                    where: { id: currentFolderId },
+                    relations: ['collection'],
+                });
+                if (parentFolder?.collectionId) {
+                    collectionId = parentFolder.collectionId;
+                    break;
+                }
+                currentFolderId = parentFolder?.parentFolderId || null;
+            }
+            where = { parentFolderId: folder.parentFolderId };
+        }
+
+        if (!collectionId) {
+            throw new BadRequestException('Could not determine collection for folder');
+        }
+        await this.verifyWorkspaceAccess(workspaceId, userId);
+
+        const maxPosition = await this.getMaxPosition(this.foldersRepository, where);
+
+        const duplicatedFolder = this.foldersRepository.create({
+            collectionId: collectionId,
+            parentFolderId: folder.parentFolderId,
+            name: `${folder.name}-copy`,
+            description: folder.description,
+            iconType: folder.iconType,
+            icon: folder.icon,
+            iconColor: folder.iconColor,
+            position: maxPosition,
+        });
+
+        const savedFolder = await this.foldersRepository.save(duplicatedFolder);
+
+        // Get nested folders and items
+        const [nestedFolders, nestedItems] = await Promise.all([
+            this.foldersRepository.find({
+                where: { parentFolderId: id },
+                order: { position: 'ASC' },
+            }),
+            this.itemsRepository.find({
+                where: { parentFolderId: id },
+                order: { position: 'ASC' },
+            }),
+        ]);
+
+        // Recursively duplicate nested folders
+        for (const nestedFolder of nestedFolders) {
+            await this.duplicateFolderRecursive(nestedFolder.id, collectionId, savedFolder.id, userId);
+        }
+
+        // Duplicate nested items
+        for (const item of nestedItems) {
+            await this.duplicateItem(item.id, userId, collectionId, savedFolder.id);
+        }
+
+        return await this.findOneFolder(savedFolder.id, userId);
     }
 
     async updateFolder(id: string, updateFolderDto: UpdateFolderDto, userId: string) {
@@ -595,10 +790,21 @@ export class PlaygroundService {
 
         const maxPosition = await this.getMaxPosition(this.itemsRepository, where);
 
+        // Set defaults for list type items
+        const iconDefaults = createItemDto.type === ItemType.LIST && !createItemDto.icon
+            ? {
+                icon: 'QueueList',
+                iconType: IconType.SOLID,
+                iconColor: '#60A5FA',
+            }
+            : {};
+
         const item = this.itemsRepository.create({
             ...createItemDto,
             position: maxPosition,
-            iconType: createItemDto.iconType ?? undefined,
+            iconType: createItemDto.iconType ?? iconDefaults.iconType ?? IconType.SOLID,
+            icon: createItemDto.icon ?? iconDefaults.icon ?? null,
+            iconColor: createItemDto.iconColor ?? iconDefaults.iconColor ?? '#60A5FA',
         });
 
         const savedItem = await this.itemsRepository.save(item);
@@ -648,6 +854,86 @@ export class PlaygroundService {
                         tags: null,
                     });
                     await this.kanbanTasksRepository.save(defaultTask);
+                }
+            }
+        }
+
+        return await this.findOneItem(savedItem.id, userId);
+    }
+
+    async duplicateItem(id: string, userId: string, targetCollectionId?: string, targetParentFolderId?: string | null) {
+        const item = await this.itemsRepository.findOne({
+            where: { id },
+            relations: ['collection'],
+        });
+
+        if (!item) {
+            throw new NotFoundException('Item not found');
+        }
+
+        const collection = await this.collectionsRepository.findOne({
+            where: { id: targetCollectionId || item.collectionId! },
+        });
+        if (!collection) {
+            throw new NotFoundException('Collection not found');
+        }
+
+        await this.verifyWorkspaceAccess(collection.workspaceId, userId);
+
+        const finalCollectionId = targetCollectionId || item.collectionId!;
+        const finalParentFolderId = targetParentFolderId !== undefined ? targetParentFolderId : item.parentFolderId;
+
+        const where = finalParentFolderId
+            ? { collectionId: finalCollectionId, parentFolderId: finalParentFolderId }
+            : { collectionId: finalCollectionId, parentFolderId: IsNull() };
+
+        const maxPosition = await this.getMaxPosition(this.itemsRepository, where);
+
+        const duplicatedItem = this.itemsRepository.create({
+            collectionId: finalCollectionId,
+            parentFolderId: finalParentFolderId,
+            name: `${item.name}-copy`,
+            description: item.description,
+            type: item.type,
+            iconType: item.iconType,
+            icon: item.icon,
+            iconColor: item.iconColor,
+            position: maxPosition,
+        });
+
+        const savedItem = await this.itemsRepository.save(duplicatedItem);
+
+        // If it's a list type, duplicate the kanban board and columns
+        if (item.type === ItemType.LIST) {
+            const originalBoard = await this.kanbanBoardsRepository.findOne({
+                where: { itemId: id },
+            });
+
+            if (originalBoard) {
+                // Get columns separately
+                const originalColumns = await this.kanbanColumnsRepository.find({
+                    where: { kanbanBoardId: originalBoard.id },
+                    order: { position: 'ASC' },
+                });
+
+                const kanbanBoard = this.kanbanBoardsRepository.create({
+                    itemId: savedItem.id,
+                });
+                const savedBoard = await this.kanbanBoardsRepository.save(kanbanBoard);
+
+                // Duplicate columns
+                if (originalColumns && originalColumns.length > 0) {
+                    await Promise.all(
+                        originalColumns.map((col) => {
+                            const column = this.kanbanColumnsRepository.create({
+                                kanbanBoardId: savedBoard.id,
+                                title: col.title,
+                                position: col.position,
+                                color: col.color,
+                            });
+                            return this.kanbanColumnsRepository.save(column);
+                        }),
+                    );
                 }
             }
         }
