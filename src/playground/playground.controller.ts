@@ -10,12 +10,9 @@ import {
     Req,
     HttpCode,
     HttpStatus,
-    UseInterceptors,
-    UploadedFile,
     Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PlaygroundService } from './playground.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
@@ -54,6 +51,7 @@ export class PlaygroundController {
                 description: { type: 'string', example: 'My project collection', nullable: true },
                 iconType: { type: 'string', enum: ['emoji', 'image'], example: 'emoji', nullable: true },
                 icon: { type: 'string', example: '🚀', nullable: true },
+                iconColor: { type: 'string', example: '#60A5FA', nullable: true },
             },
             required: ['workspaceId', 'name'],
         },
@@ -63,8 +61,9 @@ export class PlaygroundController {
                 value: {
                     workspaceId: '29457d4b-1cde-4fe3-ab8c-1df57d2c5d17',
                     name: 'ZenFlow',
-                    iconType: 'emoji',
-                    icon: '🚀',
+                    iconType: 'solid',
+                    icon: 'InboxStack',
+                    iconColor: '#60A5FA',
                 },
             },
             example2: {
@@ -100,6 +99,23 @@ export class PlaygroundController {
     findAllCollections(@Query('workspaceId') workspaceId: string, @Req() req: any) {
         const userId = req.user?.id;
         return this.playgroundService.findAllCollections(workspaceId, userId);
+    }
+
+    /**
+     * Duplicate a collection
+     * Creates a copy of the collection at the same workspace level with "-copy" suffix.
+     */
+    @Post('collections/:id/duplicate')
+    @ApiOperation({ 
+        summary: 'Duplicate collection',
+        description: 'Creates a duplicate of the collection at the same workspace level with "-copy" suffix. Copies name, description, icon, iconColor, and iconType. Also duplicates all nested folders and items recursively.'
+    })
+    @ApiResponse({ status: 201, description: 'Collection duplicated successfully' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiResponse({ status: 404, description: 'Collection not found' })
+    duplicateCollection(@Param('id') id: string, @Req() req: any) {
+        const userId = req.user?.id;
+        return this.playgroundService.duplicateCollection(id, userId);
     }
 
     /**
@@ -183,38 +199,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteCollection(id, userId);
     }
 
-    /**
-     * Upload collection icon image
-     * Uploads an image file to be used as the collection icon.
-     * The iconType will be automatically set to 'image'.
-     */
-    @Post('collections/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload collection icon',
-        description: 'Uploads an image file to be used as the collection icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Collection icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Collection icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Collection not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadCollectionIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadCollectionIcon(id, userId, file);
-    }
 
     /**
      * Reorder collections within a workspace
@@ -383,37 +367,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteFolder(id, userId);
     }
 
-    /**
-     * Upload folder icon image
-     * Uploads an image file to be used as the folder icon.
-     */
-    @Post('folders/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload folder icon',
-        description: 'Uploads an image file to be used as the folder icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Folder icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Folder icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Folder not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadFolderIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadFolderIcon(id, userId, file);
-    }
 
     /**
      * Move a folder to a different parent
@@ -491,6 +444,23 @@ export class PlaygroundController {
     reorderFolder(@Param('id') id: string, @Body() reorderDto: ReorderDto, @Req() req: any) {
         const userId = req.user?.id;
         return this.playgroundService.reorderFolder(id, reorderDto, userId);
+    }
+
+    /**
+     * Duplicate a folder
+     * Creates a copy of the folder at the same level (same parent) with "-copy" suffix.
+     */
+    @Post('folders/:id/duplicate')
+    @ApiOperation({ 
+        summary: 'Duplicate folder',
+        description: 'Creates a duplicate of the folder at the same level (same parent) with "-copy" suffix. Copies name, description, icon, iconColor, and iconType.'
+    })
+    @ApiResponse({ status: 201, description: 'Folder duplicated successfully' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiResponse({ status: 404, description: 'Folder not found' })
+    duplicateFolder(@Param('id') id: string, @Req() req: any) {
+        const userId = req.user?.id;
+        return this.playgroundService.duplicateFolder(id, userId);
     }
 
     // Items
@@ -659,37 +629,6 @@ export class PlaygroundController {
         return this.playgroundService.deleteItem(id, userId);
     }
 
-    /**
-     * Upload item icon image
-     * Uploads an image file to be used as the item icon.
-     */
-    @Post('items/:id/icon')
-    @ApiOperation({ 
-        summary: 'Upload item icon',
-        description: 'Uploads an image file to be used as the item icon. Supported formats: PNG, JPG, JPEG, GIF, WEBP.'
-    })
-    @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                icon: { type: 'string', format: 'binary', description: 'Item icon image file' },
-            },
-            required: ['icon'],
-        },
-    })
-    @ApiResponse({ status: 200, description: 'Item icon updated successfully' })
-    @ApiResponse({ status: 403, description: 'Access denied' })
-    @ApiResponse({ status: 404, description: 'Item not found' })
-    @UseInterceptors(FileInterceptor('icon'))
-    uploadItemIcon(
-        @Param('id') id: string,
-        @Req() req: any,
-        @UploadedFile() file: Express.Multer.File,
-    ) {
-        const userId = req.user?.id;
-        return this.playgroundService.uploadItemIcon(id, userId, file);
-    }
 
     /**
      * Move an item to a different parent
@@ -767,6 +706,24 @@ export class PlaygroundController {
     reorderItem(@Param('id') id: string, @Body() reorderDto: ReorderDto, @Req() req: any) {
         const userId = req.user?.id;
         return this.playgroundService.reorderItem(id, reorderDto, userId);
+    }
+
+    /**
+     * Duplicate an item
+     * Creates a copy of the item at the same level (same parent) with "-copy" suffix.
+     * For list type items, also duplicates the kanban board and columns.
+     */
+    @Post('items/:id/duplicate')
+    @ApiOperation({ 
+        summary: 'Duplicate item',
+        description: 'Creates a duplicate of the item at the same level (same parent) with "-copy" suffix. Copies name, description, icon, iconColor, iconType, and type. For list type items, also duplicates the kanban board and columns.'
+    })
+    @ApiResponse({ status: 201, description: 'Item duplicated successfully' })
+    @ApiResponse({ status: 403, description: 'Access denied' })
+    @ApiResponse({ status: 404, description: 'Item not found' })
+    duplicateItem(@Param('id') id: string, @Req() req: any) {
+        const userId = req.user?.id;
+        return this.playgroundService.duplicateItem(id, userId);
     }
 }
 

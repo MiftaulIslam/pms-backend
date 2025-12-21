@@ -3,8 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { UpdateProfileDto } from './dto/create-user.dto';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -24,7 +22,7 @@ export class UsersService {
     return this.findById(userId);
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto, file?: Express.Multer.File) {
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
     this.logger.log(`Updating profile for user: ${userId}`);
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) {
@@ -33,18 +31,7 @@ export class UsersService {
     }
 
     if (dto.name !== undefined) user.name = dto.name ?? null;
-
-    if (file) {
-      this.logger.log(`Avatar upload for user: ${userId}`);
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'avatars');
-      fs.mkdirSync(uploadsDir, { recursive: true });
-      const ext = path.extname(file.originalname) || '.png';
-      const filename = `${userId}${ext}`;
-      const filePath = path.join(uploadsDir, filename);
-      fs.writeFileSync(filePath, file.buffer);
-      this.logger.log(`Avatar saved for user ${userId} at ${filename}`);
-      user.avatar = `/uploads/avatars/${filename}`;
-    }
+    if (dto.avatar !== undefined) user.avatar = dto.avatar ?? null;
 
     this.logger.log(`Saving updated profile for user: ${userId}`);
     await this.users.save(user);

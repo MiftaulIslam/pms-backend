@@ -21,11 +21,15 @@ export class CreateCollectionDto {
   @ApiProperty({ description: 'Icon type', enum: IconType, required: false })
   @IsEnum(IconType)
   @IsOptional()
-  iconType?: IconType | null;
+  iconType?: IconType = IconType.SOLID;
 
   @ApiProperty({ description: 'Icon (emoji string or will be set after image upload)', required: false })
   @IsString()
   @IsOptional()
-  icon?: string | null;
+  icon?: string = 'InboxStack';
+  @ApiProperty({ description: 'Icon color must be specified in hex format', required: false })
+  @IsString()
+  @IsOptional()
+  iconColor?: string = '#60A5FA';
 }
 

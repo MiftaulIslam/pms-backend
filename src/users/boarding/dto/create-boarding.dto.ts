@@ -19,4 +19,9 @@ export class CreateBoardingDto {
   @IsArray()
   @IsString({ each: true })
   interestIn?: string[];
+
+  @ApiPropertyOptional({ description: 'Avatar URL or image ID' })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

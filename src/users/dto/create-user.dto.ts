@@ -9,4 +9,9 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(255)
   name?: string;
+
+  @ApiPropertyOptional({ description: 'Avatar URL or image ID' })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

@@ -6,8 +6,6 @@ import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { Workspace } from '../entities/workspace.entity';
 import { WorkspaceMember } from '../entities/workspace-member.entity';
 import { User } from '../entities/user.entity';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class WorkspacesService {
@@ -22,32 +20,11 @@ export class WorkspacesService {
 
   private readonly logger = new Logger(WorkspacesService.name);
 
-  async create(createWorkspaceDto: CreateWorkspaceDto, userId: string, file?: Express.Multer.File) {
-    let logoPath: string | null = null;
-    
-    if (file) {
-      // Create workspace logos directory if it doesn't exist
-      const logosDir = path.join(process.cwd(), 'uploads', 'workspace-logos');
-      fs.mkdirSync(logosDir, { recursive: true });
-      
-      // Generate filename: workspace-name-timestamp.extension
-      const timestamp = Date.now();
-      const sanitizedName = createWorkspaceDto.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      const ext = path.extname(file.originalname) || '.png';
-      const filename = `${sanitizedName}-${timestamp}${ext}`;
-      const filePath = path.join(logosDir, filename);
-      
-      // Save file
-      fs.writeFileSync(filePath, file.buffer);
-      logoPath = `/uploads/workspace-logos/${filename}`;
-      
-      this.logger.log(`Workspace logo saved: ${logoPath} for workspace: ${createWorkspaceDto.name}`);
-    }
-
+  async create(createWorkspaceDto: CreateWorkspaceDto, userId: string) {
     const workspace = this.workspacesRepository.create({
       name: createWorkspaceDto.name,
       ownerId: userId,
-      logo: logoPath,
+      logo: createWorkspaceDto.logo || null,
     });
     
     await this.workspacesRepository.save(workspace);
@@ -233,41 +210,17 @@ export class WorkspacesService {
     }
   }
 
-  async updateWorkspaceLogo(workspaceId: string, userId: string, file: Express.Multer.File) {
+  async updateWorkspaceLogo(workspaceId: string, userId: string, logo: string) {
     // Verify user is owner
     const workspace = await this.findOne(workspaceId, userId);
     if (workspace.ownerId !== userId) {
       throw new ForbiddenException('Only workspace owners can update workspace logo');
     }
 
-    // Create workspace logos directory if it doesn't exist
-    const logosDir = path.join(process.cwd(), 'uploads', 'workspace-logos');
-    fs.mkdirSync(logosDir, { recursive: true });
+    // Update workspace with new logo URL/ID
+    await this.workspacesRepository.update(workspaceId, { logo });
     
-    // Generate filename: workspace-name-timestamp.extension
-    const timestamp = Date.now();
-    const sanitizedName = workspace.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const ext = path.extname(file.originalname) || '.png';
-    const filename = `${sanitizedName}-${timestamp}${ext}`;
-    const filePath = path.join(logosDir, filename);
-    
-    // Delete old logo if exists
-    if (workspace.logo) {
-      const oldLogoPath = path.join(process.cwd(), workspace.logo);
-      if (fs.existsSync(oldLogoPath)) {
-        fs.unlinkSync(oldLogoPath);
-        this.logger.log(`Old workspace logo deleted: ${workspace.logo}`);
-      }
-    }
-    
-    // Save new file
-    fs.writeFileSync(filePath, file.buffer);
-    const logoPath = `/uploads/workspace-logos/${filename}`;
-    
-    // Update workspace
-    await this.workspacesRepository.update(workspaceId, { logo: logoPath });
-    
-    this.logger.log(`Workspace logo updated: ${logoPath} for workspace: ${workspace.name}`);
+    this.logger.log(`Workspace logo updated: ${logo} for workspace: ${workspace.name}`);
     
     return this.findOneWithMembers(workspaceId, userId);
   }
@@ -277,15 +230,6 @@ export class WorkspacesService {
     const workspace = await this.findOne(workspaceId, userId);
     if (workspace.ownerId !== userId) {
       throw new ForbiddenException('Only workspace owners can remove workspace logo');
-    }
-
-    // Delete logo file if exists
-    if (workspace.logo) {
-      const logoPath = path.join(process.cwd(), workspace.logo);
-      if (fs.existsSync(logoPath)) {
-        fs.unlinkSync(logoPath);
-        this.logger.log(`Workspace logo deleted: ${workspace.logo}`);
-      }
     }
     
     // Update workspace to remove logo

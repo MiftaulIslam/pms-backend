@@ -39,6 +39,11 @@ export class CreateItemDto {
   @IsOptional()
   icon?: string | null;
 
+  @ApiProperty({ description: 'Icon color must be specified in hex format', required: false })
+  @IsString()
+  @IsOptional()
+  iconColor?: string | null;
+
   @ApiProperty({ 
     description: 'Columns for list type items. If provided, these columns will be created instead of default columns. Only applicable when type is "list".', 
     type: [CreateColumnDto],
