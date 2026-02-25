@@ -435,13 +435,19 @@ export class KanbanService {
         });
 
         const currentIndex = tasks.findIndex((t) => t.id === id);
+        // Position from client is the final 0-based index in the list (e.g. 2 = "after last" when there are 2 items).
+        const requestedPosition = moveTaskDto.position;
+        if (requestedPosition < 0 || requestedPosition > tasks.length) {
+            throw new BadRequestException('Invalid position');
+        }
+        // Convert to insert index: after removing the moved task, insert at newIndex.
+        const newIndex =
+            currentIndex !== -1 && requestedPosition > currentIndex
+                ? requestedPosition - 1
+                : requestedPosition;
+
         if (currentIndex !== -1) {
             tasks.splice(currentIndex, 1);
-        }
-
-        const newIndex = moveTaskDto.position;
-        if (newIndex < 0 || newIndex > tasks.length) {
-            throw new BadRequestException('Invalid position');
         }
 
         tasks.splice(newIndex, 0, task);
