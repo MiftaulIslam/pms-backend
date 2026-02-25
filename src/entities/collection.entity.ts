@@ -43,13 +43,6 @@ export class Collection {
     default: 'InboxStack',
   })
   icon!: string | null;
-  
-  @Column('varchar', {
-    length: 500,
-    nullable: true,
-    default: '#60A5FA',
-  })
-  iconColor!: string | null;
 
   @Column('int', { default: 0 })
   position!: number;

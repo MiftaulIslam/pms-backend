@@ -27,9 +27,5 @@ export class CreateCollectionDto {
   @IsString()
   @IsOptional()
   icon?: string = 'InboxStack';
-  @ApiProperty({ description: 'Icon color must be specified in hex format', required: false })
-  @IsString()
-  @IsOptional()
-  iconColor?: string = '#60A5FA';
 }
 

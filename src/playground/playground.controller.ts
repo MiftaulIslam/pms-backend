@@ -51,7 +51,6 @@ export class PlaygroundController {
                 description: { type: 'string', example: 'My project collection', nullable: true },
                 iconType: { type: 'string', enum: ['emoji', 'image'], example: 'emoji', nullable: true },
                 icon: { type: 'string', example: '🚀', nullable: true },
-                iconColor: { type: 'string', example: '#60A5FA', nullable: true },
             },
             required: ['workspaceId', 'name'],
         },
@@ -63,7 +62,6 @@ export class PlaygroundController {
                     name: 'ZenFlow',
                     iconType: 'solid',
                     icon: 'InboxStack',
-                    iconColor: '#60A5FA',
                 },
             },
             example2: {
@@ -108,7 +106,7 @@ export class PlaygroundController {
     @Post('collections/:id/duplicate')
     @ApiOperation({ 
         summary: 'Duplicate collection',
-        description: 'Creates a duplicate of the collection at the same workspace level with "-copy" suffix. Copies name, description, icon, iconColor, and iconType. Also duplicates all nested folders and items recursively.'
+        description: 'Creates a duplicate of the collection at the same workspace level with "-copy" suffix. Copies name, description, icon, and iconType. Also duplicates all nested folders and items recursively.'
     })
     @ApiResponse({ status: 201, description: 'Collection duplicated successfully' })
     @ApiResponse({ status: 403, description: 'Access denied' })

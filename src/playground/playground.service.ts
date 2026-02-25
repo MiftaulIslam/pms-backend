@@ -259,7 +259,6 @@ export class PlaygroundService {
             description: collection.description,
             iconType: collection.iconType,
             icon: collection.icon,
-            iconColor: collection.iconColor,
             position: maxPosition,
         });
 
