@@ -5,8 +5,6 @@ import { CreateBoardingDto } from './dto/create-boarding.dto';
 import { UpdateBoardingDto } from './dto/update-boarding.dto';
 import { User } from '../../entities/user.entity';
 import { Workspace } from '../../entities/workspace.entity';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class BoardingService {
@@ -16,7 +14,7 @@ export class BoardingService {
     @InjectRepository(Workspace) private readonly workspaces: Repository<Workspace>,
   ) {}
 
-  async complete(userId: string, dto: CreateBoardingDto, file?: Express.Multer.File) {
+  async complete(userId: string, dto: CreateBoardingDto) {
     this.logger.log(`Starting onboarding completion for user: ${userId}`);
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) {
@@ -37,17 +35,9 @@ export class BoardingService {
       user.interestIn = dto.interestIn ?? null;
       this.logger.log(`InterestIn updated for user: ${userId} -> ${JSON.stringify(dto.interestIn)}`);
     }
-
-    if (file) {
-      this.logger.log(`Avatar upload during onboarding for user: ${userId}`);
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'avatars');
-      fs.mkdirSync(uploadsDir, { recursive: true });
-      const ext = path.extname(file.originalname) || '.png';
-      const filename = `${userId}${ext}`;
-      const filePath = path.join(uploadsDir, filename);
-      fs.writeFileSync(filePath, file.buffer);
-      this.logger.log(`Avatar saved during onboarding for user ${userId} at ${filename}`);
-      user.avatar = `/uploads/avatars/${filename}`;
+    if (dto.avatar !== undefined) {
+      user.avatar = dto.avatar ?? null;
+      this.logger.log(`Avatar updated for user: ${userId} -> ${dto.avatar}`);
     }
 
     user.onboarded = true;

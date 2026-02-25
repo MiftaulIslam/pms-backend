@@ -6,14 +6,11 @@ import {
   Param,
   Patch,
   Req,
-  UploadedFile,
-  UseInterceptors,
   Logger,
   UseGuards,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiOkResponse, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/create-user.dto';
@@ -48,20 +45,13 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: 'Update profile (name/avatar)' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ schema: { type: 'object', properties: { name: { type: 'string' }, avatar: { type: 'string', format: 'binary' } } } })
   @Patch('profile')
-  @UseInterceptors(FileInterceptor('avatar'))
   updateProfile(
     @Req() req: any,
     @Body() dto: UpdateProfileDto,
-    @UploadedFile() file?: Express.Multer.File,
   ) {
     const userId = req.user?.id || req.headers['x-user-id'];
     this.logger.log(`Updating profile for user: ${userId}`);
-    if (file) {
-      this.logger.log(`Avatar file received for user: ${userId}, filename: ${file.originalname}`);
-    }
-    return this.usersService.updateProfile(String(userId), dto, file);
+    return this.usersService.updateProfile(String(userId), dto);
   }
 }

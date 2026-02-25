@@ -21,11 +21,11 @@ export class CreateCollectionDto {
   @ApiProperty({ description: 'Icon type', enum: IconType, required: false })
   @IsEnum(IconType)
   @IsOptional()
-  iconType?: IconType | null;
+  iconType?: IconType = IconType.SOLID;
 
   @ApiProperty({ description: 'Icon (emoji string or will be set after image upload)', required: false })
   @IsString()
   @IsOptional()
-  icon?: string | null;
+  icon?: string = 'InboxStack';
 }
 

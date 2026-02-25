@@ -1,5 +1,4 @@
 export enum IconType {
-  EMOJI = 'emoji',
-  IMAGE = 'image',
+    SOLID = 'solid',
+    OUTLINE = 'outline',
 }
-

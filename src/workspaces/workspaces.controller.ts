@@ -10,11 +10,8 @@ import {
   Req,
   HttpCode,
   HttpStatus,
-  UseInterceptors,
-  UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
@@ -29,22 +26,10 @@ export class WorkspacesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new workspace' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string', example: 'My Team Workspace' },
-        logo: { type: 'string', format: 'binary', description: 'Workspace logo (optional)' },
-      },
-      required: ['name'],
-    },
-  })
   @ApiResponse({ status: 201, description: 'Workspace created successfully' })
-  @UseInterceptors(FileInterceptor('logo'))
-  create(@Body() createWorkspaceDto: CreateWorkspaceDto, @Req() req: any, @UploadedFile() file?: Express.Multer.File) {
+  create(@Body() createWorkspaceDto: CreateWorkspaceDto, @Req() req: any) {
     const userId = req.user?.id;
-    return this.workspacesService.create(createWorkspaceDto, userId, file);
+    return this.workspacesService.create(createWorkspaceDto, userId);
   }
 
   @Get()
@@ -123,14 +108,13 @@ export class WorkspacesController {
     return this.workspacesService.leaveWorkspace(id, userId);
   }
 
-  @Post(':id/logo')
+  @Patch(':id/logo')
   @ApiOperation({ summary: 'Update workspace logo (owner only)' })
-  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        logo: { type: 'string', format: 'binary', description: 'Workspace logo' },
+        logo: { type: 'string', description: 'Workspace logo URL or image ID' },
       },
       required: ['logo'],
     },
@@ -138,14 +122,13 @@ export class WorkspacesController {
   @ApiResponse({ status: 200, description: 'Workspace logo updated successfully' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   @ApiResponse({ status: 403, description: 'Access denied or not owner' })
-  @UseInterceptors(FileInterceptor('logo'))
   updateWorkspaceLogo(
     @Param('id') id: string, 
-    @Req() req: any, 
-    @UploadedFile() file: Express.Multer.File
+    @Body() body: { logo: string },
+    @Req() req: any
   ) {
     const userId = req.user?.id;
-    return this.workspacesService.updateWorkspaceLogo(id, userId, file);
+    return this.workspacesService.updateWorkspaceLogo(id, userId, body.logo);
   }
 
   @Delete(':id/logo')

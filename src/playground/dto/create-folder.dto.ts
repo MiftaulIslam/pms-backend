@@ -31,5 +31,10 @@ export class CreateFolderDto {
   @IsString()
   @IsOptional()
   icon?: string | null;
+
+  @ApiProperty({ description: 'Icon color must be specified in hex format', required: false })
+  @IsString()
+  @IsOptional()
+  iconColor?: string | null;
 }
 

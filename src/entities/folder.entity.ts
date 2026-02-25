@@ -33,11 +33,26 @@ export class Folder {
   @Column('text', { nullable: true })
   description: string | null = null;
 
-  @Column({ type: 'enum', enum: IconType, nullable: true })
-  iconType: IconType | null = null;
+  @Column('varchar', {
+    length: 500,
+    nullable: true,
+    default: 'Folder',
+  })
+  icon!: string | null;
+  
+  @Column('varchar', {
+    length: 500,
+    nullable: true,
+    default: '#60A5FA',
+  })
+  iconColor!: string | null;
+  @Column({
+    type: 'enum',
+    enum: IconType,
+    default: IconType.SOLID,
+  })
+  iconType!: IconType;
 
-  @Column('varchar', { length: 500, nullable: true })
-  icon: string | null = null;
 
   @Column('int', { default: 0 })
   position!: number;
